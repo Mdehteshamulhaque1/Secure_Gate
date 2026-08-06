@@ -1,0 +1,566 @@
+{% extends "base_public.html" %}
+{% load static %}
+{% block title %}SecureGate — Enterprise Visitor &amp; Access Management{% endblock %}
+
+{% block body %}
+<div class="sg-landing">
+    <!-- ============ HEADER ============ -->
+    <header class="sg-site-header">
+        <nav class="container d-flex align-items-center justify-content-between py-3">
+            <a class="d-flex align-items-center gap-2 fw-bold text-decoration-none" href="#top">
+                {% include "partials/logo_inline.html" %}
+                <span class="sg-logo-text" style="font-size:1.2rem">Secure<span class="text-accent">Gate</span></span>
+            </a>
+            <ul class="nav d-none d-lg-flex gap-1">
+                <li><a class="sg-hnav-link" href="#dashboard">Dashboard</a></li>
+                <li><a class="sg-hnav-link" href="#visitors">Visitors</a></li>
+                <li><a class="sg-hnav-link" href="#approvals">Approvals</a></li>
+                <li><a class="sg-hnav-link" href="#security">Security</a></li>
+                <li><a class="sg-hnav-link" href="#reports">Reports</a></li>
+            </ul>
+            <div class="d-flex align-items-center gap-2">
+                {% if user.is_authenticated %}
+                    <span class="sg-pill pill-CHECKED_IN d-none d-md-inline">{{ user.get_role_display }}</span>
+                    <div class="dropdown">
+                        <a class="d-flex align-items-center gap-2 text-decoration-none text-white dropdown-toggle cursor-pointer" data-bs-toggle="dropdown">
+                            <span class="avatar" style="width:34px;height:34px;font-size:.75rem">{{ user.full_name|first }}</span>
+                            <span class="d-none d-md-inline small fw-semibold">{{ user.full_name }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li><span class="dropdown-item-text small text-muted">{{ user.email }}</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-sm">Sign in</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-sg btn-sm">Get started</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <a id="top"></a>
+
+    {% if not user.is_authenticated %}
+    <!-- ============ HERO (anonymous) ============ -->
+    <section class="sg-hero container text-center">
+        <div class="sg-logo-anim fade-up">
+            <div class="pulse-ring"></div>
+            <svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="sgGrad" x1="0" y1="0" x2="100" y2="110" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#10b981"/><stop offset="1" stop-color="#06b6d4"/>
+                    </linearGradient>
+                </defs>
+                <path class="shield-path" d="M50 4 L90 17 V48 C90 77 72 98 50 106 C28 98 10 77 10 48 V17 Z"/>
+                <path class="tick-path" d="M34 56 L46 68 L68 40"/>
+            </svg>
+            <div class="sg-scanline"></div>
+        </div>
+        <h1 class="display-5 fw-bold mt-4 fade-up delay-1">
+            Modern Visitor &amp; <span class="text-accent">Access Management</span>
+        </h1>
+        <p class="lead text-secondary fade-up delay-2 mx-auto" style="max-width:640px">
+            Pre-register visitors, approve requests, issue QR passes, and run check-in / check-out
+            — all in one secure platform.
+        </p>
+        <div class="d-flex gap-3 justify-content-center mt-4 fade-up delay-3">
+            <a href="{% url 'accounts:register' %}" class="btn btn-sg btn-lg px-4"><i class="bi bi-rocket-takeoff me-2"></i>Get started free</a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg px-4"><i class="bi bi-box-arrow-in-right me-2"></i>Sign in</a>
+        </div>
+        <div class="row g-3 mt-3 mx-auto fade-up delay-4" style="max-width:820px">
+            {% for step in steps %}
+            <div class="col-md-3">
+                <div class="sg-hero-step">
+                    <div class="sg-logo-text mb-1" style="font-size:1.2rem">{{ forloop.counter }}</div>
+                    <div class="fw-semibold small">{{ step }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="alert alert-warning d-inline-flex align-items-center gap-2 mt-4 py-2 px-3 small">
+            <i class="bi bi-info-circle"></i> Sign in to see the live dashboard below.
+        </div>
+    </section>
+    {% else %}
+    <!-- ============ WELCOME STRIP (authenticated) ============ -->
+    <section class="container sg-welcome fade-up">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="sg-logo-anim-mini">{% include "partials/logo_inline.html" %}</div>
+                <div>
+                    <h4 class="fw-bold mb-0">Welcome back, {{ user.full_name|first }}.</h4>
+                    <div class="text-secondary small">
+                        {{ user.organization.name|default:"SecureGate" }} · {{ user.get_role_display }}
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                {% if perms.create_visitor %}
+                <a href="{% url 'visits:walkin_register' %}" class="btn btn-sm btn-sg"><i class="bi bi-person-plus me-1"></i>Walk-in</a>
+                <a href="{% url 'visits:visitor_register' %}" class="btn btn-sm btn-sg-outline"><i class="bi bi-plus-lg me-1"></i>Register visitor</a>
+                {% endif %}
+                <a href="{% url 'reports:dashboard' %}" class="btn btn-sm btn-outline-light">Full dashboard <i class="bi bi-arrow-up-right ms-1"></i></a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <!-- ============ DASHBOARD SECTION ============ -->
+    <section class="sg-section container" id="dashboard">
+        <div class="sg-section-head reveal">
+            <h2 class="fw-bold mb-0"><i class="bi bi-speedometer2 text-accent me-2"></i>Dashboard</h2>
+            <p class="text-secondary mb-0 small">Live KPIs &amp; analytics</p>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi bg-sg-grad p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value sg-counter" data-target="{{ kpis.today }}">0</div><div class="label">Visitors today</div></div>
+                        <div class="icon bg-white bg-opacity-25"><i class="bi bi-calendar-check"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-warning sg-counter" data-target="{{ kpis.pending }}">0</div><div class="label">Pending approval</div></div>
+                        <div class="icon bg-glow-accent text-warning"><i class="bi bi-hourglass-split"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-success sg-counter" data-target="{{ kpis.inside }}">0</div><div class="label">Inside now</div></div>
+                        <div class="icon bg-glow-accent text-success"><i class="bi bi-building-check"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-primary sg-counter" data-target="{{ kpis.avg_duration }}">0<small class="fs-6">m</small></div><div class="label">Avg. visit</div></div>
+                        <div class="icon bg-glow-accent text-primary"><i class="bi bi-stopwatch"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-info sg-counter" data-target="{{ kpis.week }}">0</div><div class="label">This week</div></div>
+                        <div class="icon bg-glow-accent text-info"><i class="bi bi-calendar-week"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-secondary sg-counter" data-target="{{ kpis.checked_out }}">0</div><div class="label">Checked out</div></div>
+                        <div class="icon bg-glow-accent text-secondary"><i class="bi bi-box-arrow-right"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-danger sg-counter" data-target="{{ kpis.rejected }}">0</div><div class="label">Rejected</div></div>
+                        <div class="icon bg-glow-accent text-danger"><i class="bi bi-x-octagon"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal">
+                <div class="sg-card sg-kpi p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="value text-accent sg-counter" data-target="{{ kpis.total }}">0</div><div class="label">All records</div></div>
+                        <div class="icon bg-glow-accent text-accent"><i class="bi bi-database"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4 reveal">
+                <div class="sg-card sg-card-pad h-100">
+                    <h6 class="fw-bold mb-3">Visits by status</h6>
+                    <div style="height:250px"><canvas id="landingStatusChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-8 reveal">
+                <div class="sg-card sg-card-pad h-100">
+                    <h6 class="fw-bold mb-3">Peak hours (last 30 days)</h6>
+                    <div style="height:250px"><canvas id="landingPeakChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-6 reveal">
+                <div class="sg-card sg-card-pad h-100">
+                    <h6 class="fw-bold mb-3">Visitors by department</h6>
+                    <div style="height:250px"><canvas id="landingDeptChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-6 reveal">
+                <div class="sg-card sg-card-pad h-100">
+                    <h6 class="fw-bold mb-3">First-time vs repeat visitors</h6>
+                    <div style="height:250px"><canvas id="landingRepeatChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ VISITORS SECTION ============ -->
+    <section class="sg-section sg-section-alt" id="visitors">
+        <div class="container">
+            <div class="sg-section-head reveal">
+                <h2 class="fw-bold mb-0"><i class="bi bi-people text-accent me-2"></i>Recent visitors</h2>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'visits:visitor_list' %}" class="btn btn-sm btn-sg-outline">All visitors</a>
+                    {% if perms.create_visitor %}<a href="{% url 'visits:visitor_register' %}" class="btn btn-sm btn-sg">Register</a>{% endif %}
+                </div>
+            </div>
+            <div class="sg-card reveal">
+                <div class="table-responsive">
+                    <table class="table sg-table align-middle mb-0">
+                        <thead><tr><th>Visitor</th><th>Company</th><th>Purpose</th><th>Host</th><th>Date</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody>
+                        {% for v in recent_visits %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if v.visitor.photo %}<img src="{{ v.visitor.photo.url }}" class="avatar" style="width:32px;height:32px">
+                                    {% else %}<span class="avatar" style="width:32px;height:32px;font-size:.7rem">{{ v.visitor.full_name|first }}</span>{% endif %}
+                                    <div>
+                                        <div class="fw-semibold">{{ v.visitor.full_name }}</div>
+                                        <div class="text-muted" style="font-size:.72rem">{{ v.visitor.phone }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="small">{{ v.visitor.company|default:"—" }}</span></td>
+                            <td><span class="small">{{ v.purpose }}</span></td>
+                            <td><span class="small">{{ v.host.full_name|default:"—" }}</span></td>
+                            <td><span class="small">{{ v.visit_date }}</span></td>
+                            <td><span class="sg-pill pill-{{ v.status }}">{{ v.get_status_display }}</span></td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'visits:visitor_detail' v.visitor.pk %}" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                                    {% if perms.badge_print %}<a href="{% url 'visits:badge' v.pk %}" class="btn btn-outline-secondary"><i class="bi bi-printer"></i></a>{% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-5">No visitors yet. Register your first visitor!</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ APPROVALS SECTION ============ -->
+    <section class="sg-section" id="approvals">
+        <div class="container">
+            <div class="sg-section-head reveal">
+                <h2 class="fw-bold mb-0"><i class="bi bi-check2-circle text-accent me-2"></i>Approvals</h2>
+                <a href="{% url 'visits:approvals' %}" class="btn btn-sm btn-sg-outline">Open approvals</a>
+            </div>
+            <div class="row g-3">
+                {% for visit in pending %}
+                <div class="col-md-6 col-xl-3 reveal">
+                    <div class="sg-card h-100">
+                        <div class="sg-card-pad">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                {% if visit.visitor.photo %}<img src="{{ visit.visitor.photo.url }}" class="avatar" style="width:38px;height:38px">
+                                {% else %}<span class="avatar" style="width:38px;height:38px;font-size:.75rem">{{ visit.visitor.full_name|first }}</span>{% endif %}
+                                <div>
+                                    <div class="fw-bold small">{{ visit.visitor.full_name }}</div>
+                                    <div class="text-muted" style="font-size:.72rem">{{ visit.visitor.company|default:"Independent" }}</div>
+                                </div>
+                            </div>
+                            <div class="small text-muted mb-3">
+                                <div><i class="bi bi-briefcase me-1"></i>{{ visit.purpose }}</div>
+                                <div><i class="bi bi-calendar me-1"></i>{{ visit.visit_date }} · {{ visit.expected_arrival }}</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <form method="post" action="{% url 'visits:approval_action' visit.pk 'approve' %}" class="flex-fill">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-sg w-100"><i class="bi bi-check-lg me-1"></i>Approve</button>
+                                </form>
+                                <form method="post" action="{% url 'visits:approval_action' visit.pk 'reject' %}" class="flex-fill">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger w-100"><i class="bi bi-x-lg"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 reveal">
+                    <div class="sg-card sg-card-pad text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-2"></i>
+                        <div class="mt-1">No pending approvals. All caught up.</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ SECURITY SECTION ============ -->
+    <section class="sg-section sg-section-alt" id="security">
+        <div class="container">
+            <div class="sg-section-head reveal">
+                <h2 class="fw-bold mb-0"><i class="bi bi-shield-check text-accent me-2"></i>Security &amp; entry</h2>
+                {% if perms.scan_qr %}<a href="{% url 'visits:security' %}" class="btn btn-sm btn-sg-outline">Security panel</a>{% endif %}
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-6 reveal">
+                    <div class="sg-card h-100">
+                        <div class="sg-card-pad border-bottom"><h6 class="fw-bold mb-0"><i class="bi bi-people me-2 text-success"></i>Inside now ({{ inside|length }})</h6></div>
+                        <div class="table-responsive">
+                            <table class="table sg-table align-middle mb-0">
+                                <thead><tr><th>Visitor</th><th>Purpose</th><th>In since</th><th class="text-end">Check out</th></tr></thead>
+                                <tbody>
+                                {% for v in inside %}
+                                <tr>
+                                    <td class="fw-semibold small">{{ v.visitor.full_name }}</td>
+                                    <td><span class="small">{{ v.purpose }}</span></td>
+                                    <td><span class="small">{{ v.checked_in_at|date:"H:i" }}</span></td>
+                                    <td class="text-end">
+                                        <a href="{% url 'visits:checkout' v.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right"></i></a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted py-4">Nobody inside right now.</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 reveal">
+                    <div class="sg-card h-100">
+                        <div class="sg-card-pad border-bottom"><h6 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Today's arrivals ({{ today_visits|length }})</h6></div>
+                        <div class="table-responsive">
+                            <table class="table sg-table align-middle mb-0">
+                                <thead><tr><th>Visitor</th><th>Host</th><th>Arrival</th><th>Status</th></tr></thead>
+                                <tbody>
+                                {% for v in today_visits %}
+                                <tr>
+                                    <td class="fw-semibold small">{{ v.visitor.full_name }}</td>
+                                    <td><span class="small">{{ v.host.full_name|default:"—" }}</span></td>
+                                    <td><span class="small">{{ v.expected_arrival }}</span></td>
+                                    <td><span class="sg-pill pill-{{ v.status }}">{{ v.get_status_display }}</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted py-4">No visits scheduled today.</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ REPORTS SECTION ============ -->
+    <section class="sg-section" id="reports">
+        <div class="container">
+            <div class="sg-section-head reveal">
+                <h2 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow text-accent me-2"></i>Reports</h2>
+                {% if perms.view_reports %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'reports:reports' %}" class="btn btn-sm btn-sg-outline">Full reports</a>
+                    <a href="{% url 'reports:reports' %}?period=daily&format=csv" class="btn btn-sm btn-sg-outline"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="row g-3 reveal">
+                <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-primary sg-counter" data-target="{{ report_summary.total }}">0</div><div class="text-muted small">Total</div></div></div>
+                <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-warning sg-counter" data-target="{{ report_summary.approved }}">0</div><div class="text-muted small">Approved</div></div></div>
+                <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-success sg-counter" data-target="{{ report_summary.inside }}">0</div><div class="text-muted small">Inside</div></div></div>
+                <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-secondary sg-counter" data-target="{{ report_summary.checked_out }}">0</div><div class="text-muted small">Checked out</div></div></div>
+                <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-danger sg-counter" data-target="{{ report_summary.rejected }}">0</div><div class="text-muted small">Rejected</div></div></div>
+                <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-accent">{{ kpis.avg_duration }}<small>m</small></div><div class="text-muted small">Avg. visit</div></div></div>
+            </div>
+        </div>
+    </section>
+    {% else %}
+    <!-- ============ ANONYMOUS PREVIEW ============ -->
+    <section class="container sg-section">
+        <div class="sg-card sg-card-pad text-center py-5 reveal">
+            <i class="bi bi-lock fs-1 text-accent"></i>
+            <h4 class="fw-bold mt-3">The full workspace is behind the dashboard</h4>
+            <p class="text-secondary mx-auto" style="max-width:520px">
+                Live KPIs, visitor approvals, QR check-in, security control and reports are all
+                embedded on this page once you sign in.
+            </p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <a href="{% url 'accounts:login' %}" class="btn btn-sg px-4">Sign in to explore</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary px-4">Create account</a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="sg-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <a class="d-flex align-items-center gap-2 fw-bold text-decoration-none mb-2" href="#top">
+                        {% include "partials/logo_inline.html" %}
+                        <span class="sg-logo-text">Secure<span class="text-accent">Gate</span></span>
+                    </a>
+                    <p class="text-secondary small">
+                        Modern visitor management, employee approvals, security operations and
+                        access control for organizations of every size.
+                    </p>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="fw-bold mb-3">Product</h6>
+                    <ul class="list-unstyled small text-secondary">
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="#dashboard">Dashboard</a></li>
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="#visitors">Visitors</a></li>
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="#approvals">Approvals</a></li>
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="#security">Security</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="fw-bold mb-3">Resources</h6>
+                    <ul class="list-unstyled small text-secondary">
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="#reports">Reports</a></li>
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="{% url 'reports:reports' %}?period=daily&format=csv">CSV export</a></li>
+                        <li class="mb-2"><a class="text-decoration-none text-secondary" href="/admin/">Admin</a></li>
+                    </ul>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <h6 class="fw-bold mb-3">Try the assistant</h6>
+                    <p class="text-secondary small mb-3">Ask GateBot anything about your organization's live data.</p>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-sg" onclick="openChat()"><i class="bi bi-chat-dots me-1"></i>Chat with GateBot</button>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-secondary opacity-25 my-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center small text-secondary">
+                <span>© {% now "Y" %} SecureGate · Enterprise Visitor &amp; Access Management</span>
+                <span>Built with Django · Django REST Framework · Bootstrap</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- ============ CHATBOT WIDGET ============ -->
+<div class="sg-chat-toggle" id="chatToggle" onclick="openChat()">
+    <i class="bi bi-chat-dots"></i>
+</div>
+<div class="sg-chat" id="chatPanel">
+    <div class="sg-chat-head">
+        <div class="d-flex align-items-center gap-2">
+            <div class="sg-chat-avatar"><i class="bi bi-robot"></i></div>
+            <div>
+                <div class="fw-bold small">GateBot</div>
+                <div class="sg-chat-status"><span class="dot"></span> online · live data</div>
+            </div>
+        </div>
+        <button class="btn-close btn-close-white" onclick="closeChat()"></button>
+    </div>
+    <div class="sg-chat-body" id="chatBody">
+        <div class="sg-msg sg-msg-bot">
+            Hello! I'm <strong>GateBot</strong> — I can query your live visitor data.
+            Try "visitors today", "who is inside now", "pending approvals" or "find Rahul".
+        </div>
+    </div>
+    <div class="sg-chat-suggest" id="chatSuggest">
+        <button onclick="askGateBot('visitors today')">visitors today</button>
+        <button onclick="askGateBot('who is inside now')">who is inside</button>
+        <button onclick="askGateBot('pending approvals')">pending approvals</button>
+    </div>
+    <form class="sg-chat-input" onsubmit="return askGateBot(this)">
+        <input type="text" id="chatText" placeholder="Ask about your data..." autocomplete="off">
+        <button type="submit"><i class="bi bi-send-fill"></i></button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% if user.is_authenticated %}
+<script>
+const statusLabels = {{ charts.status_labels|safe }};
+const statusCounts = {{ charts.status_counts|safe }};
+const statusColors = {{ charts.status_colors|safe }};
+const peakLabels = {{ charts.peak_labels|safe }};
+const peakValues = {{ charts.peak_values|safe }};
+const deptLabels = {{ charts.dept_labels|safe }};
+const deptValues = {{ charts.dept_values|safe }};
+const repeatVals = {{ charts.repeat_vals|safe }};
+
+new Chart(document.getElementById("landingStatusChart"), { type: "doughnut", data: {
+    labels: statusLabels, datasets: [{ data: statusCounts, backgroundColor: statusColors, borderWidth: 2, borderColor: "#fff" }]
+}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } } });
+
+new Chart(document.getElementById("landingPeakChart"), { type: "bar", data: {
+    labels: peakLabels, datasets: [{ label: "Expected arrivals", data: peakValues, backgroundColor: "rgba(16,185,129,.75)", borderRadius: 6 }]
+}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+new Chart(document.getElementById("landingDeptChart"), { type: "bar", data: {
+    labels: deptLabels, datasets: [{ label: "Visits", data: deptValues, backgroundColor: "rgba(6,182,212,.75)", borderRadius: 6 }]
+}, options: { responsive: true, maintainAspectRatio: false, indexAxis: "y", plugins: { legend: { display: false } } } });
+
+new Chart(document.getElementById("landingRepeatChart"), { type: "pie", data: {
+    labels: ["First-time", "Repeat"], datasets: [{ data: repeatVals, backgroundColor: ["#06b6d4", "#10b981"], borderWidth: 2, borderColor: "#fff" }]
+}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } } });
+</script>
+{% endif %}
+<script>
+const CSRF = "{{ csrf_token }}";
+
+function openChat() {
+    document.getElementById("chatPanel").classList.add("open");
+    document.getElementById("chatToggle").style.display = "none";
+    document.getElementById("chatText").focus();
+}
+function closeChat() {
+    document.getElementById("chatPanel").classList.remove("open");
+    document.getElementById("chatToggle").style.display = "grid";
+}
+function addMsg(text, who) {
+    const body = document.getElementById("chatBody");
+    const el = document.createElement("div");
+    el.className = "sg-msg " + (who === "bot" ? "sg-msg-bot" : "sg-msg-user");
+    el.innerHTML = text.replace(/\n/g, "<br>");
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    return el;
+}
+function askGateBot(input) {
+    let text;
+    if (typeof input === "string") {
+        text = input;
+    } else {
+        input.preventDefault();
+        const field = document.getElementById("chatText");
+        text = field.value.trim();
+        if (!text) return false;
+        field.value = "";
+    }
+    addMsg(text, "user");
+    const typing = addMsg('<span class="typing"><span></span><span></span><span></span></span>', "bot");
+    fetch("{% url 'reports:chatbot' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF },
+        body: JSON.stringify({ message: text })
+    })
+    .then(r => r.json())
+    .then(data => { typing.innerHTML = (data.reply || "...").replace(/\n/g, "<br>"); })
+    .catch(() => { typing.innerHTML = "Sorry, I couldn't reach the server."; });
+    return false;
+}
+</script>
+{% endblock %}

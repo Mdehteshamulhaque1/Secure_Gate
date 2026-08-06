@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Buildings{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Buildings</h4>
+        <p class="text-muted mb-0 small">{{ request.user.organization.name }}</p>
+    </div>
+    <a href="{% url 'organizations:building_create' %}" class="btn btn-sm btn-sg"><i class="bi bi-plus-lg me-1"></i>Add building</a>
+</div>
+<div class="row g-3">
+    {% for b in buildings %}
+    <div class="col-md-6 col-xl-4">
+        <div class="sg-card h-100">
+            <div class="sg-card-pad">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="fs-2"><i class="bi bi-building"></i></div>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'organizations:building_edit' b.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{% url 'organizations:building_delete' b.pk %}" data-confirm="Delete {{ b.name }}?">
+                            {% csrf_token %}
+                            <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+                <h5 class="fw-bold mt-2 mb-0">{{ b.name }}</h5>
+                <div class="text-muted small">{{ b.address|default:"No address" }}</div>
+                <hr>
+                <div class="row text-center small">
+                    <div class="col"><div class="fw-bold">{{ b.floors }}</div><div class="text-muted">Floors</div></div>
+                    <div class="col"><div class="fw-bold">{{ b.entry_gates }}</div><div class="text-muted">Entry gates</div></div>
+                    <div class="col"><div class="fw-bold">{{ b.exit_gates }}</div><div class="text-muted">Exit gates</div></div>
+                    <div class="col"><div class="fw-bold">{{ b.has_reception_desk|yesno:"Yes,No" }}</div><div class="text-muted">Reception</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="sg-card sg-card-pad text-center py-5 text-muted">
+            <i class="bi bi-building fs-1"></i>
+            <div class="mt-2">No buildings yet. Add your first building.</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

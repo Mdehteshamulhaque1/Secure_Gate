@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{% if is_walkin %}Walk-in registration{% else %}Register visitor{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">{% if is_walkin %}<i class="bi bi-person-plus-fill text-accent me-1"></i>Walk-in registration{% else %}Register visitor{% endif %}</h4>
+        <p class="text-muted mb-0 small">
+            {% if is_walkin %}Reception desk — instantly approved with QR pass.{% else %}Pre-registration — host approval required before the QR pass is issued.{% endif %}
+        </p>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="sg-card sg-card-pad">
+                <h6 class="fw-bold mb-3"><i class="bi bi-person-badge me-2 text-accent"></i>Visitor details</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Full name *</label>
+                        {{ visitor_form.full_name }}{{ visitor_form.full_name.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Phone *</label>
+                        {{ visitor_form.phone }}{{ visitor_form.phone.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Email</label>
+                        {{ visitor_form.email }}{{ visitor_form.email.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Company</label>
+                        {{ visitor_form.company }}{{ visitor_form.company.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Designation</label>
+                        {{ visitor_form.designation }}{{ visitor_form.designation.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Photo</label>
+                        {{ visitor_form.photo }}{{ visitor_form.photo.errors }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Address</label>
+                        {{ visitor_form.address }}{{ visitor_form.address.errors }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="sg-card sg-card-pad mt-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-text me-2 text-accent"></i>Documents &amp; vehicle</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Document type</label>{{ visitor_form.document_type }}{{ visitor_form.document_type.errors }}</div>
+                    <div class="col-md-8"><label class="form-label small fw-semibold">Document number</label>{{ visitor_form.document_number }}{{ visitor_form.document_number.errors }}</div>
+                    <div class="col-12"><label class="form-label small fw-semibold">Document file (pdf/jpg/png)</label>{{ visitor_form.document_file }}{{ visitor_form.document_file.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Vehicle number</label>{{ visitor_form.vehicle_number }}{{ visitor_form.vehicle_number.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Vehicle type</label>{{ visitor_form.vehicle_type }}{{ visitor_form.vehicle_type.errors }}</div>
+                </div>
+            </div>
+
+            <div class="sg-card sg-card-pad mt-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-people me-2 text-accent"></i>Emergency &amp; notes</h6>
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Emergency contact</label>{{ visitor_form.emergency_contact }}{{ visitor_form.emergency_contact.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Emergency phone</label>{{ visitor_form.emergency_phone }}{{ visitor_form.emergency_phone.errors }}</div>
+                    <div class="col-12"><label class="form-label small fw-semibold">Special notes</label>{{ visitor_form.special_notes }}{{ visitor_form.special_notes.errors }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="sg-card sg-card-pad">
+                <h6 class="fw-bold mb-3"><i class="bi bi-calendar-event me-2 text-accent"></i>Visit details</h6>
+                <div class="mb-3"><label class="form-label small fw-semibold">Building</label>{{ visit_form.building }}{{ visit_form.building.errors }}</div>
+                <div class="mb-3"><label class="form-label small fw-semibold">Host employee *</label>{{ visit_form.host }}{{ visit_form.host.errors }}</div>
+                <div class="mb-3"><label class="form-label small fw-semibold">Purpose of visit *</label>{{ visit_form.purpose }}{{ visit_form.purpose.errors }}</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6"><label class="form-label small fw-semibold">Visit date</label>{{ visit_form.visit_date }}{{ visit_form.visit_date.errors }}</div>
+                    <div class="col-6"><label class="form-label small fw-semibold">Expected arrival</label>{{ visit_form.expected_arrival }}{{ visit_form.expected_arrival.errors }}</div>
+                    <div class="col-6"><label class="form-label small fw-semibold">Expected exit</label>{{ visit_form.expected_exit }}{{ visit_form.expected_exit.errors }}</div>
+                </div>
+                <div class="mb-3"><label class="form-label small fw-semibold">Notes</label>{{ visit_form.notes }}{{ visit_form.notes.errors }}</div>
+                {% if visit_form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ visit_form.non_field_errors|join:", " }}</div>{% endif %}
+                <button class="btn btn-sg w-100 py-2">
+                    {% if is_walkin %}<i class="bi bi-check2-circle me-1"></i>Register &amp; issue QR pass{% else %}<i class="bi bi-send me-1"></i>Submit for approval{% endif %}
+                </button>
+                <div class="form-text small text-center mt-2">
+                    {% if is_walkin %}Walk-ins are auto-approved by reception.{% else %}The host employee will be asked to approve this visit.{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

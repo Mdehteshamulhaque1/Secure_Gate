@@ -1,0 +1,36 @@
+{% extends "base_public.html" %}
+{% block title %}Create account{% endblock %}
+{% block body %}
+<div class="sg-auth-bg">
+    <div class="container" style="max-width: 480px">
+        <div class="text-center mb-4 fade-up">
+            {% include "partials/logo_inline.html" %}
+            <div class="sg-logo-text text-white mt-2" style="font-size:1.4rem">Secure<span>Gate</span></div>
+            <p class="text-secondary small">Create your SecureGate account</p>
+        </div>
+        <div class="sg-card sg-card-pad p-4 shadow-lg fade-up delay-1">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} py-2 small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                <button class="btn btn-sg w-100 py-2">Create account</button>
+            </form>
+            <div class="text-center mt-3 small">
+                <span class="text-muted">Already registered?</span>
+                <a href="{% url 'accounts:login' %}" class="text-accent fw-semibold text-decoration-none">Sign in</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

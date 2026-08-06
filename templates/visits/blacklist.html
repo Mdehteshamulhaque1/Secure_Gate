@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Blacklist{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Blacklist</h4>
+        <p class="text-muted mb-0 small">Visitors blocked from entering your premises</p>
+    </div>
+</div>
+<div class="sg-card">
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead>
+                <tr><th>Visitor</th><th>Phone</th><th>Reason</th><th>Comment</th><th>Added by</th><th>Added on</th><th class="text-end"></th></tr>
+            </thead>
+            <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if entry.visitor.photo %}<img src="{{ entry.visitor.photo.url }}" class="avatar" style="width:32px;height:32px">
+                        {% else %}<span class="avatar" style="width:32px;height:32px;font-size:.7rem">{{ entry.visitor.full_name|first }}</span>{% endif %}
+                        <span class="fw-semibold">{{ entry.visitor.full_name }}</span>
+                    </div>
+                </td>
+                <td><span class="small">{{ entry.visitor.phone }}</span></td>
+                <td><span class="sg-pill pill-REJECTED">{{ entry.get_reason_display }}</span></td>
+                <td><span class="small">{{ entry.comment|default:"—" }}</span></td>
+                <td><span class="small">{{ entry.added_by.full_name|default:"—" }}</span></td>
+                <td><span class="small">{{ entry.created_at|date:"d M Y H:i" }}</span></td>
+                <td class="text-end">
+                    {% if perms.blacklist_visitor %}
+                    <form method="post" action="{% url 'visits:blacklist_remove' entry.pk %}" data-confirm="Remove {{ entry.visitor.full_name }} from blacklist?" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-success"><i class="bi bi-unlock me-1"></i>Remove</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-5">Blacklist is empty.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

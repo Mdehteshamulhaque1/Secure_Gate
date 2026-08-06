@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My Visits{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">My Visits</h4>
+        <p class="text-muted mb-0 small">Visits you created or host</p>
+    </div>
+    {% if perms.create_visitor %}
+    <a href="{% url 'visits:visitor_register' %}" class="btn btn-sm btn-sg"><i class="bi bi-plus-lg me-1"></i>Register visitor</a>
+    {% endif %}
+</div>
+<div class="sg-card">
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead>
+                <tr><th>Visitor</th><th>Purpose</th><th>Date</th><th>Role</th><th>Status</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+            {% for v in visits %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if v.visitor.photo %}<img src="{{ v.visitor.photo.url }}" class="avatar" style="width:32px;height:32px">
+                        {% else %}<span class="avatar" style="width:32px;height:32px;font-size:.7rem">{{ v.visitor.full_name|first }}</span>{% endif %}
+                        <span class="fw-semibold">{{ v.visitor.full_name }}</span>
+                    </div>
+                </td>
+                <td><span class="small">{{ v.purpose }}</span></td>
+                <td><span class="small">{{ v.visit_date }}</span></td>
+                <td>
+                    <span class="sg-pill {% if v.created_by == request.user %}pill-APPROVED{% else %}pill-PENDING{% endif %}">
+                        {% if v.created_by == request.user %}Host{% else %}Created by me{% endif %}
+                    </span>
+                </td>
+                <td><span class="sg-pill pill-{{ v.status }}">{{ v.get_status_display }}</span></td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'visits:visitor_detail' v.visitor.pk %}" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                        {% if perms.badge_print %}<a href="{% url 'visits:badge' v.pk %}" class="btn btn-outline-secondary"><i class="bi bi-printer"></i></a>{% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-5">You have no visits yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

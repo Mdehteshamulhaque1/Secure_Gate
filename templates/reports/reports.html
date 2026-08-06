@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Reports</h4>
+        <p class="text-muted mb-0 small">{{ title }} · generated {{ today|default:"now" }}</p>
+    </div>
+    <a href="?{{ request.GET.urlencode }}&format=csv" class="btn btn-sm btn-sg-outline"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+</div>
+
+<div class="sg-card sg-card-pad mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold">Period</label>
+            <select name="period" class="form-select form-select-sm">
+                <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+                <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Weekly</option>
+                <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold">Department</label>
+            <select name="dept" class="form-select form-select-sm">
+                <option value="">All departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if dept == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-sm btn-sg">Apply</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-primary">{{ summary.total }}</div><div class="text-muted small">Total</div></div></div>
+    <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-warning">{{ summary.approved }}</div><div class="text-muted small">Approved</div></div></div>
+    <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-success">{{ summary.checked_in }}</div><div class="text-muted small">Checked in</div></div></div>
+    <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-secondary">{{ summary.checked_out }}</div><div class="text-muted small">Checked out</div></div></div>
+    <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-danger">{{ summary.rejected }}</div><div class="text-muted small">Rejected</div></div></div>
+    <div class="col-6 col-lg-2"><div class="sg-card sg-card-pad text-center"><div class="fs-3 fw-bold text-info">{{ visits|length }}</div><div class="text-muted small">Rows shown</div></div></div>
+</div>
+
+<div class="sg-card">
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead>
+                <tr><th>Visitor</th><th>Company</th><th>Purpose</th><th>Host</th><th>Dept</th><th>Date</th><th>Status</th><th>Duration</th></tr>
+            </thead>
+            <tbody>
+            {% for v in visits %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if v.visitor.photo %}<img src="{{ v.visitor.photo.url }}" class="avatar" style="width:30px;height:30px">{% endif %}
+                        <span class="fw-semibold">{{ v.visitor.full_name }}</span>
+                    </div>
+                </td>
+                <td><span class="small">{{ v.visitor.company|default:"—" }}</span></td>
+                <td><span class="small">{{ v.purpose }}</span></td>
+                <td><span class="small">{{ v.host.full_name|default:"—" }}</span></td>
+                <td><span class="small">{{ v.host.employee_profile.department.name|default:"—" }}</span></td>
+                <td><span class="small">{{ v.visit_date }}</span></td>
+                <td><span class="sg-pill pill-{{ v.status }}">{{ v.get_status_display }}</span></td>
+                <td><span class="small">{{ v.duration_minutes }}m</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center text-muted py-5">No records for this period.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Employees</h4>
+        <p class="text-muted mb-0 small">Staff who host and approve visitors</p>
+    </div>
+    <a href="{% url 'organizations:employee_create' %}" class="btn btn-sm btn-sg"><i class="bi bi-plus-lg me-1"></i>Add employee</a>
+</div>
+<div class="sg-card sg-card-pad mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-6">
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search name, email, employee ID, designation...">
+        </div>
+        <div class="col-md-2 d-grid"><button class="btn btn-sm btn-sg-outline"><i class="bi bi-search"></i></button></div>
+    </form>
+</div>
+<div class="sg-card">
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead><tr><th>Employee</th><th>ID</th><th>Department</th><th>Designation</th><th>Building</th><th>Status</th><th class="text-end"></th></tr></thead>
+            <tbody>
+            {% for e in employees %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if e.user.avatar %}<img src="{{ e.user.avatar.url }}" class="avatar" style="width:32px;height:32px">
+                        {% else %}<span class="avatar" style="width:32px;height:32px;font-size:.7rem">{{ e.user.full_name|first }}</span>{% endif %}
+                        <div>
+                            <div class="fw-semibold">{{ e.user.full_name }}</div>
+                            <div class="text-muted" style="font-size:.75rem">{{ e.user.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="sg-pill pill-CHECKED_OUT">{{ e.employee_id }}</span></td>
+                <td><span class="small">{{ e.department.name|default:"—" }}</span></td>
+                <td><span class="small">{{ e.designation|default:"—" }}</span></td>
+                <td><span class="small">{{ e.building.name|default:"—" }}</span></td>
+                <td><span class="sg-pill pill-{% if e.status == 'ACTIVE' %}CHECKED_IN{% elif e.status == 'ON_LEAVE' %}PENDING{% else %}REJECTED{% endif %}">{{ e.get_status_display }}</span></td>
+                <td class="text-end"><a href="{% url 'organizations:employee_edit' e.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-5">No employees found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

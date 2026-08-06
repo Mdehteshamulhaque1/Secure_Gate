@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Reception Desk{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">Reception Desk</h4>
+        <p class="text-muted mb-0 small">Today, {{ today }}</p>
+    </div>
+    <a href="{% url 'visits:walkin_register' %}" class="btn btn-sm btn-sg"><i class="bi bi-person-plus me-1"></i>Register walk-in</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="sg-card sg-card-pad text-center"><div class="value text-warning fw-bold fs-2">{{ waiting.count }}</div><div class="text-muted small fw-semibold">Waiting to check in</div></div></div>
+    <div class="col-md-4"><div class="sg-card sg-card-pad text-center"><div class="value text-success fw-bold fs-2">{{ checked_in.count }}</div><div class="text-muted small fw-semibold">Inside now</div></div></div>
+    <div class="col-md-4"><div class="sg-card sg-card-pad text-center"><div class="value text-primary fw-bold fs-2">{{ today_visits.count }}</div><div class="text-muted small fw-semibold">Total today</div></div></div>
+</div>
+
+<div class="sg-card">
+    <div class="sg-card-pad border-bottom d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0">Today's visitors</h6>
+        <input type="text" id="tableSearch" class="form-control form-control-sm" style="max-width:240px" placeholder="Filter list...">
+    </div>
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead>
+                <tr><th>Visitor</th><th>Company</th><th>Host</th><th>Status</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+            {% for v in today_visits %}
+            <tr data-search-row>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if v.visitor.photo %}<img src="{{ v.visitor.photo.url }}" class="avatar" style="width:34px;height:34px">
+                        {% else %}<span class="avatar" style="width:34px;height:34px;font-size:.7rem">{{ v.visitor.full_name|first }}</span>{% endif %}
+                        <div>
+                            <div class="fw-semibold">{{ v.visitor.full_name }}</div>
+                            <div class="text-muted" style="font-size:.75rem">{{ v.visitor.phone }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="small">{{ v.visitor.company|default:"—" }}</span></td>
+                <td><span class="small">{{ v.host.full_name|default:"—" }}</span></td>
+                <td><span class="sg-pill pill-{{ v.status }}">{{ v.get_status_display }}</span></td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        {% if v.status == 'APPROVED' or v.status == 'PENDING' %}
+                        <a href="{% url 'visits:checkin' v.pk %}" class="btn btn-outline-success" title="Check-in"><i class="bi bi-box-arrow-in-right"></i></a>
+                        {% endif %}
+                        {% if v.status == 'CHECKED_IN' %}
+                        <a href="{% url 'visits:checkout' v.pk %}" class="btn btn-outline-danger" title="Check-out"><i class="bi bi-box-arrow-right"></i></a>
+                        {% endif %}
+                        <a href="{% url 'visits:badge' v.pk %}" class="btn btn-outline-secondary" title="Print badge"><i class="bi bi-printer"></i></a>
+                        <a href="{% url 'visits:visitor_detail' v.visitor.pk %}" class="btn btn-outline-secondary" title="View"><i class="bi bi-eye"></i></a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-5">No visits scheduled today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base_public.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<div class="sg-auth-bg">
+    <div class="container" style="max-width: 420px">
+        <div class="text-center mb-4 fade-up">
+            {% include "partials/logo_inline.html" %}
+            <div class="sg-logo-text text-white mt-2" style="font-size:1.4rem">Secure<span>Gate</span></div>
+            <p class="text-secondary small">Sign in to your workspace</p>
+        </div>
+        <div class="sg-card sg-card-pad p-4 shadow-lg fade-up delay-1">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'danger' }} py-2 small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% if form.errors and not form.non_field_errors %}
+                <div class="alert alert-danger py-2 small">Please fix the errors below.</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">{{ form.non_field_errors|join:", " }}</div>
+                {% endif %}
+                <button class="btn btn-sg w-100 py-2">Sign in</button>
+            </form>
+            <div class="text-center mt-3 small">
+                <span class="text-muted">New here?</span>
+                <a href="{% url 'accounts:register' %}" class="text-accent fw-semibold text-decoration-none">Create an account</a>
+            </div>
+        </div>
+        <p class="text-center text-secondary mt-3 small fade-up delay-2">
+            <i class="bi bi-lock-fill me-1"></i>JWT secured · 5 failed attempts locks the account for 15 minutes
+        </p>
+    </div>
+</div>
+{% endblock %}

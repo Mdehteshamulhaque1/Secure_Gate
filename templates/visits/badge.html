@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Visitor Badge{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Visitor Badge</h4>
+        <p class="text-muted mb-0 small">{{ visit.visitor.full_name }} · {{ visit.visit_date }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-sg"><i class="bi bi-printer me-1"></i>Print badge</button>
+        <a href="{% url 'visits:visitor_detail' visit.visitor.pk %}" class="btn btn-outline-secondary">Back</a>
+    </div>
+</div>
+
+<div id="print-area" class="d-flex justify-content-center">
+    <div class="sg-badge">
+        <div class="sg-badge-head d-flex align-items-center gap-2">
+            {% include "partials/logo_inline.html" %}
+            <div>
+                <div class="fw-bold lh-1">SECUREGATE</div>
+                <div style="font-size:.6rem;letter-spacing:.12em" class="opacity-75">{{ visit.organization.name|upper }} · VISITOR</div>
+            </div>
+        </div>
+        <div class="p-3 text-center">
+            {% if visit.visitor.photo %}
+                <img src="{{ visit.visitor.photo.url }}" class="sg-badge-photo">
+            {% else %}
+                <div class="sg-badge-photo mx-auto d-grid place-items-center text-muted" style="display:grid"><i class="bi bi-person fs-1"></i></div>
+            {% endif %}
+            <h5 class="fw-bold mt-2 mb-0">{{ visit.visitor.full_name }}</h5>
+            <div class="text-muted small">{{ visit.visitor.company|default:"Independent" }}</div>
+            {% if visit.visitor.designation %}<div class="text-muted small">{{ visit.visitor.designation }}</div>{% endif %}
+            <hr>
+            <div class="text-start small">
+                <div class="d-flex justify-content-between"><span class="text-muted">Host</span><span class="fw-semibold">{{ visit.host.full_name|default:"—" }}</span></div>
+                <div class="d-flex justify-content-between"><span class="text-muted">Purpose</span><span class="fw-semibold">{{ visit.purpose }}</span></div>
+                <div class="d-flex justify-content-between"><span class="text-muted">Building</span><span class="fw-semibold">{{ visit.building.name|default:"—" }}</span></div>
+                <div class="d-flex justify-content-between"><span class="text-muted">Arrival</span><span class="fw-semibold">{{ visit.expected_arrival }}</span></div>
+                <div class="d-flex justify-content-between"><span class="text-muted">Date</span><span class="fw-semibold">{{ visit.visit_date }}</span></div>
+            </div>
+            <div class="d-flex justify-content-center my-3">
+                <img src="{{ qr_uri }}" style="width:150px;height:150px">
+            </div>
+            <div class="small text-muted">Valid until {{ qr.expires_at|date:"H:i" }} · {{ qr.token|truncatechars:18 }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}My Approvals{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">My Approvals</h4>
+        <p class="text-muted mb-0 small">Visits waiting for your decision</p>
+    </div>
+</div>
+
+{% if pending %}
+<div class="row g-3 mb-4">
+    {% for visit in pending %}
+    <div class="col-md-6 col-xl-4">
+        <div class="sg-card h-100">
+            <div class="sg-card-pad">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    {% if visit.visitor.photo %}<img src="{{ visit.visitor.photo.url }}" class="avatar" style="width:40px;height:40px">
+                    {% else %}<span class="avatar" style="width:40px;height:40px;font-size:.8rem">{{ visit.visitor.full_name|first }}</span>{% endif %}
+                    <div>
+                        <div class="fw-bold">{{ visit.visitor.full_name }}</div>
+                        <div class="text-muted small">{{ visit.visitor.company|default:"Independent" }}</div>
+                    </div>
+                </div>
+                <div class="small text-muted mb-3">
+                    <div><i class="bi bi-briefcase me-1"></i>{{ visit.purpose }}</div>
+                    <div><i class="bi bi-calendar me-1"></i>{{ visit.visit_date }} · {{ visit.expected_arrival }}–{{ visit.expected_exit }}</div>
+                    <div><i class="bi bi-buildings me-1"></i>{{ visit.building.name|default:"—" }}</div>
+                    <div><i class="bi bi-telephone me-1"></i>{{ visit.visitor.phone }}</div>
+                </div>
+                <div class="d-flex gap-2 mb-2">
+                    <form method="post" action="{% url 'visits:approval_action' visit.pk 'approve' %}" class="flex-fill">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-sg w-100">
+                            <i class="bi bi-check-lg me-1"></i>Approve
+                        </button>
+                    </form>
+                    <button class="btn btn-sm btn-outline-danger flex-fill" type="submit" form="reject{{ visit.pk }}">
+                        <i class="bi bi-x-lg me-1"></i>Reject
+                    </button>
+                </div>
+                <form method="post" action="{% url 'visits:approval_action' visit.pk 'reject' %}" id="reject{{ visit.pk }}">
+                    {% csrf_token %}
+                    <input type="text" name="reason" class="form-control form-control-sm" placeholder="Rejection reason (optional)">
+                </form>
+                <div class="text-center small">
+                    <a href="{% url 'visits:visitor_detail' visit.visitor.pk %}" class="text-accent text-decoration-none">View full profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="sg-card sg-card-pad text-center py-5 text-muted mb-4">
+    <i class="bi bi-inbox fs-1"></i>
+    <div class="mt-2">No pending approvals. You're all caught up.</div>
+</div>
+{% endif %}
+
+<div class="sg-card">
+    <div class="sg-card-pad border-bottom"><h6 class="fw-bold mb-0">Recently decided</h6></div>
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead><tr><th>Visitor</th><th>Purpose</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for visit in history %}
+            <tr>
+                <td class="fw-semibold">{{ visit.visitor.full_name }}</td>
+                <td><span class="small">{{ visit.purpose }}</span></td>
+                <td><span class="small">{{ visit.visit_date }}</span></td>
+                <td><span class="sg-pill pill-{{ visit.status }}">{{ visit.get_status_display }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">Nothing decided yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

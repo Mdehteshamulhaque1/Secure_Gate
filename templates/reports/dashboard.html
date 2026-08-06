@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Dashboard</h4>
+        <p class="text-muted mb-0 small">Live overview for {{ request.user.organization.name|default:"your workspace" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'reports:reports' %}" class="btn btn-sm btn-sg-outline"><i class="bi bi-file-earmark-arrow-down me-1"></i>Reports</a>
+        <a href="{% url 'visits:visitor_register' %}" class="btn btn-sm btn-sg"><i class="bi bi-plus-lg me-1"></i>New visitor</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="sg-card sg-kpi bg-sg-grad p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="value">{{ kpis.today }}</div><div class="label">Visitors today</div></div>
+                <div class="icon bg-white bg-opacity-25"><i class="bi bi-calendar-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sg-card sg-kpi p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="value text-warning">{{ kpis.pending }}</div><div class="label">Pending approval</div></div>
+                <div class="icon bg-glow-accent text-warning"><i class="bi bi-hourglass-split"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sg-card sg-kpi p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="value text-success">{{ kpis.inside }}</div><div class="label">Visitors inside</div></div>
+                <div class="icon bg-glow-accent text-success"><i class="bi bi-building-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sg-card sg-kpi p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="value text-primary">{{ kpis.avg_duration }}<small class="fs-6">m</small></div><div class="label">Avg. visit</div></div>
+                <div class="icon bg-glow-accent text-primary"><i class="bi bi-stopwatch"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="sg-card sg-card-pad">
+            <h6 class="fw-bold mb-3">Visits by status</h6>
+            <div style="height:250px"><canvas id="statusChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="sg-card sg-card-pad">
+            <h6 class="fw-bold mb-3">Peak hours (last 30 days)</h6>
+            <div style="height:250px"><canvas id="peakChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="sg-card sg-card-pad">
+            <h6 class="fw-bold mb-3">Visitors by department</h6>
+            <div style="height:250px"><canvas id="deptChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="sg-card sg-card-pad">
+            <h6 class="fw-bold mb-3">First-time vs repeat visitors</h6>
+            <div style="height:250px"><canvas id="repeatChart"></canvas></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const statusLabels = {{ charts.status_labels|safe }};
+const statusCounts = {{ charts.status_counts|safe }};
+const statusColors = {{ charts.status_colors|safe }};
+const peakLabels = {{ charts.peak_labels|safe }};
+const peakValues = {{ charts.peak_values|safe }};
+const deptLabels = {{ charts.dept_labels|safe }};
+const deptValues = {{ charts.dept_values|safe }};
+const repeatVals = {{ charts.repeat_vals|safe }};
+
+new Chart(document.getElementById("statusChart"), {
+    type: "doughnut",
+    data: {
+        labels: statusLabels,
+        datasets: [{ data: statusCounts, backgroundColor: statusColors, borderWidth: 2, borderColor: "#fff" }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
+});
+
+new Chart(document.getElementById("peakChart"), {
+    type: "bar",
+    data: {
+        labels: peakLabels,
+        datasets: [{
+            label: "Expected arrivals", data: peakValues,
+            backgroundColor: "rgba(16,185,129,.75)", borderRadius: 6
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById("deptChart"), {
+    type: "bar",
+    data: {
+        labels: deptLabels,
+        datasets: [{
+            label: "Visits", data: deptValues,
+            backgroundColor: "rgba(6,182,212,.75)", borderRadius: 6
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: "y", plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById("repeatChart"), {
+    type: "pie",
+    data: {
+        labels: ["First-time", "Repeat"],
+        datasets: [{
+            data: repeatVals,
+            backgroundColor: ["#06b6d4", "#10b981"], borderWidth: 2, borderColor: "#fff"
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
+});
+</script>
+{% endblock %}

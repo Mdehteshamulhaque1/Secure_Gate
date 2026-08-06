@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ visitor.full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        {% if visitor.photo %}
+            <img src="{{ visitor.photo.url }}" class="avatar" style="width:56px;height:56px">
+        {% else %}
+            <span class="avatar" style="width:56px;height:56px;font-size:1.3rem">{{ visitor.full_name|first }}</span>
+        {% endif %}
+        <div>
+            <h4 class="fw-bold mb-0">{{ visitor.full_name }}
+                {% if visitor.is_blacklisted %}<span class="sg-pill pill-REJECTED ms-1">BLACKLISTED</span>{% endif %}
+            </h4>
+            <p class="text-muted mb-0 small">{{ visitor.company|default:"Independent" }}{% if visitor.designation %} · {{ visitor.designation }}{% endif %}</p>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if perms.blacklist_visitor and not visitor.is_blacklisted %}
+        <a href="{% url 'visits:blacklist_add' visitor.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-ban me-1"></i>Blacklist</a>
+        {% endif %}
+        {% if perms.create_visitor %}
+        <a href="{% url 'visits:visitor_register' %}" class="btn btn-sm btn-sg-outline"><i class="bi bi-plus-lg me-1"></i>New visit</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="sg-card sg-card-pad">
+            <h6 class="fw-bold mb-3">Contact</h6>
+            <ul class="list-unstyled small mb-0">
+                <li class="mb-2"><i class="bi bi-telephone me-2 text-accent"></i>{{ visitor.phone }}</li>
+                <li class="mb-2"><i class="bi bi-envelope me-2 text-accent"></i>{{ visitor.email|default:"—" }}</li>
+                <li class="mb-2"><i class="bi bi-geo-alt me-2 text-accent"></i>{{ visitor.address|default:"—" }}</li>
+                {% if visitor.vehicle_number %}<li class="mb-2"><i class="bi bi-car-front me-2 text-accent"></i>{{ visitor.vehicle_number }} <span class="text-muted">({{ visitor.get_vehicle_type_display }})</span></li>{% endif %}
+                <li><i class="bi bi-person-exclamation me-2 text-accent"></i>Emergency: {{ visitor.emergency_contact|default:"—" }}{% if visitor.emergency_phone %} · {{ visitor.emergency_phone }}{% endif %}</li>
+            </ul>
+        </div>
+        <div class="sg-card sg-card-pad mt-3">
+            <h6 class="fw-bold mb-3">ID Document</h6>
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-credit-card-2-front fs-3 text-accent"></i>
+                <div class="small">
+                    <div class="fw-semibold">{{ visitor.get_document_type_display|default:"None on file" }}</div>
+                    <div class="text-muted">{{ visitor.document_number|default:"" }}</div>
+                </div>
+            </div>
+            {% if visitor.document_file %}
+            <a href="{{ visitor.document_file.url }}" target="_blank" class="btn btn-sm btn-sg-outline mt-3"><i class="bi bi-file-earmark me-1"></i>View document</a>
+            {% endif %}
+            {% if visitor.special_notes %}
+            <div class="alert alert-warning py-2 small mt-3 mb-0"><strong>Notes:</strong> {{ visitor.special_notes }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="sg-card">
+            <div class="sg-card-pad border-bottom"><h6 class="fw-bold mb-0">Visit history</h6></div>
+            <div class="table-responsive">
+                <table class="table sg-table align-middle mb-0">
+                    <thead><tr><th>Date</th><th>Purpose</th><th>Host</th><th>Status</th><th>QR</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody>
+                    {% for v in recent_visits %}
+                    <tr>
+                        <td><span class="small">{{ v.visit_date }}</span></td>
+                        <td><span class="small">{{ v.purpose }}</span></td>
+                        <td><span class="small">{{ v.host.full_name|default:"—" }}</span></td>
+                        <td><span class="sg-pill pill-{{ v.status }}">{{ v.get_status_display }}</span></td>
+                        <td>
+                            {% if v.qr_uri %}
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#qrModal{{ v.pk }}"><i class="bi bi-qr-code"></i></button>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                {% if perms.badge_print %}<a href="{% url 'visits:badge' v.pk %}" class="btn btn-outline-secondary" title="Badge"><i class="bi bi-printer"></i></a>{% endif %}
+                                {% if perms.checkin_visitor and v.status == 'APPROVED' %}<a href="{% url 'visits:checkin' v.pk %}" class="btn btn-outline-success" title="Check-in"><i class="bi bi-box-arrow-in-right"></i></a>{% endif %}
+                                {% if perms.checkout_visitor and v.status == 'CHECKED_IN' %}<a href="{% url 'visits:checkout' v.pk %}" class="btn btn-outline-danger" title="Check-out"><i class="bi bi-box-arrow-right"></i></a>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% if v.qr_uri %}
+                    <div class="modal fade" id="qrModal{{ v.pk }}" tabindex="-1">
+                        <div class="modal-dialog modal-sm modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header"><h6 class="modal-title">QR Pass</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body text-center">
+                                    <img src="{{ v.qr_uri }}" style="width:180px">
+                                    <div class="text-muted small mt-2">Expires: {{ v.qr_pass.expires_at }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No visits yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

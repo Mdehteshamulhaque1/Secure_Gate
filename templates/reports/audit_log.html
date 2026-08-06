@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Audit Logs</h4>
+        <p class="text-muted mb-0 small">Immutable trail of every action on the platform</p>
+    </div>
+</div>
+<div class="sg-card">
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead>
+                <tr><th>Time</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+            <tr>
+                <td><span class="small text-muted">{{ log.created_at|date:"d M Y H:i:s" }}</span></td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="avatar" style="width:28px;height:28px;font-size:.6rem">{{ log.user.full_name|first|default:"?" }}</span>
+                        <span class="small fw-semibold">{{ log.user.full_name|default:"System" }}</span>
+                    </div>
+                </td>
+                <td><span class="sg-pill pill-CHECKED_OUT">{{ log.action }}</span></td>
+                <td><span class="small">{{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id|truncatechars:10 }}{% endif %}</span></td>
+                <td><span class="small text-muted">{{ log.details|default:"—" }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-5">No audit records yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

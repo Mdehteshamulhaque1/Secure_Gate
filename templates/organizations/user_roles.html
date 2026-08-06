@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Roles &amp; Users{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Roles &amp; Users</h4>
+        <p class="text-muted mb-0 small">Assign roles to users in your organization</p>
+    </div>
+</div>
+<div class="sg-card">
+    <div class="table-responsive">
+        <table class="table sg-table align-middle mb-0">
+            <thead><tr><th>User</th><th>Current role</th><th>Change role</th><th></th></tr></thead>
+            <tbody>
+            {% for u in users %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if u.avatar %}<img src="{{ u.avatar.url }}" class="avatar" style="width:32px;height:32px">
+                        {% else %}<span class="avatar" style="width:32px;height:32px;font-size:.7rem">{{ u.full_name|first }}</span>{% endif %}
+                        <div>
+                            <div class="fw-semibold">{{ u.full_name }}</div>
+                            <div class="text-muted" style="font-size:.75rem">{{ u.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="sg-pill pill-APPROVED">{{ u.get_role_display }}</span></td>
+                <td>
+                    <form method="post" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                        <select name="role" class="form-select form-select-sm" style="max-width:200px">
+                            {% for value, label in roles %}
+                            <option value="{{ value }}" {% if u.role == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-sm btn-sg-outline">Update</button>
+                    </form>
+                </td>
+                <td class="text-end"><span class="small text-muted">{{ u.last_login|date:"d M Y"|default:"never logged in" }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-5">No users yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

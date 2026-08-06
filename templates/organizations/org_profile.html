@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Organization{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Organization Profile</h4>
+        <p class="text-muted mb-0 small">{{ org.name }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'organizations:building_list' %}" class="btn btn-sm btn-sg-outline"><i class="bi bi-houses me-1"></i>Buildings ({{ org.building_count }})</a>
+        <a href="{% url 'organizations:department_list' %}" class="btn btn-sm btn-sg-outline"><i class="bi bi-diagram-3 me-1"></i>Departments</a>
+    </div>
+</div>
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="sg-card sg-card-pad text-center">
+            {% if org.logo %}<img src="{{ org.logo.url }}" style="max-height:90px" class="mb-3">{% else %}<div class="display-5 mb-2">🏢</div>{% endif %}
+            <h5 class="fw-bold mb-0">{{ org.name }}</h5>
+            <div class="text-muted small">{{ org.tagline|default:"" }}</div>
+            <hr>
+            <div class="text-start small">
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">City</span><span>{{ org.city|default:"—" }}</span></div>
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Country</span><span>{{ org.country|default:"—" }}</span></div>
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Timezone</span><span>{{ org.timezone }}</span></div>
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Working hours</span><span>{{ org.working_hours_start|time:"H:i" }} – {{ org.working_hours_end|time:"H:i" }}</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="sg-card sg-card-pad">
+            <h6 class="fw-bold mb-3">Edit profile</h6>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label small fw-semibold">{{ form.name.label }}</label>{{ form.name }}{{ form.name.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">{{ form.slug.label }}</label>{{ form.slug }}{{ form.slug.errors }}</div>
+                    <div class="col-12"><label class="form-label small fw-semibold">{{ form.tagline.label }}</label>{{ form.tagline }}{{ form.tagline.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">{{ form.logo.label }}</label>{{ form.logo }}{{ form.logo.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">{{ form.timezone.label }}</label>{{ form.timezone }}{{ form.timezone.errors }}</div>
+                    <div class="col-12"><label class="form-label small fw-semibold">{{ form.address.label }}</label>{{ form.address }}{{ form.address.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">{{ form.city.label }}</label>{{ form.city }}{{ form.city.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">{{ form.country.label }}</label>{{ form.country }}{{ form.country.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Working hours start</label>{{ form.working_hours_start }}{{ form.working_hours_start.errors }}</div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Working hours end</label>{{ form.working_hours_end }}{{ form.working_hours_end.errors }}</div>
+                </div>
+                <button class="btn btn-sg mt-4 px-4">Save changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
