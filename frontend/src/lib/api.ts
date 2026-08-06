@@ -3,6 +3,16 @@ import type { AuthTokens } from "@/lib/types"
 const ACCESS_KEY = "sg_access"
 const REFRESH_KEY = "sg_refresh"
 
+// API base URL: uses Vite proxy in dev (/api), full URL in production via VITE_API_URL
+const API_BASE = import.meta.env.VITE_API_URL ?? ""
+
+function buildUrl(path: string): string {
+  if (!API_BASE) return path // dev: use Vite proxy /api
+  const base = API_BASE.replace(/\/+$/, "")
+  const p = path.startsWith("/") ? path : `/${path}`
+  return `${base}${p}`
+}
+
 export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_KEY)
 }
@@ -37,7 +47,7 @@ async function refreshAccessToken(): Promise<boolean> {
   const refresh = getRefreshToken()
   if (!refresh) return false
   try {
-    const res = await fetch("/api/auth/token/refresh/", {
+    const res = await fetch(buildUrl("/api/auth/token/refresh/"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
@@ -63,7 +73,7 @@ export async function api<T>(path: string, options: RequestInit = {}, retry = tr
   }
   if (token) headers.set("Authorization", `Bearer ${token}`)
 
-  let res = await fetch(path, { ...options, headers })
+  let res = await fetch(buildUrl(path), { ...options, headers })
 
   if (res.status === 401 && retry && getRefreshToken()) {
     const ok = await refreshAccessToken()
