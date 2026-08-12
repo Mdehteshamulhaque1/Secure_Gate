@@ -24,9 +24,17 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
+backend/staticfiles/
+backend/logs/
 /static/
 
 # Secrets / keys
+.env
+.env.*
+!.env.example
+!frontend/.env.example
+secrets/
+*.secret
 *.key
 *.pem
 secret.key

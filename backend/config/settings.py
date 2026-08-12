@@ -9,15 +9,26 @@ import dj_database_url
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env for local development (Render/Vercel inject real env vars).
+load_dotenv(BASE_DIR / ".env")
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-@^securegate-change-me-in-prod")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+# Reads both DJANGO_DEBUG (Render/dotenv) and DEBUG for compatibility.
+DEBUG = os.environ.get("DJANGO_DEBUG", os.environ.get("DEBUG", "True")) == "True"
+
+# Runtime environment. "production" requires DATABASE_URL (Supabase PostgreSQL);
+# "development" falls back to a local SQLite file when DATABASE_URL is absent.
+ENVIRONMENT = os.environ.get("DJANGO_ENV", "production" if not DEBUG else "development")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
@@ -86,7 +97,15 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# Uses DATABASE_URL in production (PostgreSQL on Render), falls back to SQLite locally
+#
+# Production uses Supabase (PostgreSQL) via DATABASE_URL. Session Pooler example
+# (placeholders only — never commit real credentials):
+#   postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+#
+# dj-database-url honours ?sslmode=require in the URL, and we also force it
+# whenever a Postgres engine is selected (Supabase requires TLS).
+# Local development without DATABASE_URL falls back to SQLite.
+# In production DATABASE_URL is required — never silently fall back to SQLite.
 
 DATABASES = {
     "default": dj_database_url.config(
@@ -95,6 +114,22 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
+
+if DATABASES["default"]["ENGINE"].startswith("django.db.backends.postgresql"):
+    DATABASES["default"].setdefault("OPTIONS", {})
+    # Respect an explicit sslmode; default to require (Supabase mandates TLS).
+    DATABASES["default"]["OPTIONS"].setdefault(
+        "sslmode", os.environ.get("POSTGRES_SSL_MODE", "require")
+    )
+
+if ENVIRONMENT == "production" and not DATABASES["default"]["ENGINE"].startswith(
+    "django.db.backends.postgresql"
+):
+    raise ImproperlyConfigured(
+        "DATABASE_URL is required in production (Supabase PostgreSQL). Set the "
+        "DATABASE_URL environment variable on Render — the SQLite fallback is "
+        "only for local development."
+    )
 
 
 # Password validation

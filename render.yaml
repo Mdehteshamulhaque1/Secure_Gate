@@ -1,44 +1,40 @@
 # Render Infrastructure as Code
-# Deploy with: render deploy (after installing render CLI) or connect repo in dashboard
+# Deploy with: connect this repo → Root Directory: backend
+# The database is Supabase PostgreSQL (Session Pooler) — NOT Render Postgres.
+# DATABASE_URL is a secret you set in the Render dashboard (never in Git).
 
 services:
-  # PostgreSQL Database
-  - type: pserv
-    name: securegate-db
-    plan: free
-    region: oregon
-    postgresMajorVersion: 16
-    databaseName: securegate
-    user: securegate
-
-  # Django Web Service
+  # Django Web Service (API + server-rendered app)
   - type: web
     name: securegate-api
     runtime: python3
     plan: free
     region: oregon
+    rootDir: backend
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
+    # Run Django migrations against Supabase before each deploy.
+    preDeployCommand: python manage.py migrate
     startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 60
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+      - key: DJANGO_ENV
+        value: "production"
+      - key: DJANGO_DEBUG
+        value: "False"
       - key: SECRET_KEY
         generateValue: true
-      - key: DEBUG
-        value: "False"
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
-      - fromDatabase:
-          name: securegate-db
-          property: connectionString
-        key: DATABASE_URL
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # Supabase connection string (Session Pooler, port 5432).
+      # Set this in Render Dashboard → Environment. Never commit it.
+      - key: DATABASE_URL
+        sync: false
     healthCheckPath: /api/auth/me/
     autoDeploy: true
-
-# Optional: Add a cron job for cleanup (expired QR passes)
-# cronJobs:
-#   - name: cleanup-expired-qr
-#     schedule: "0 3 * * *"  # 3 AM daily
-#     command: python manage.py cleanup_expired_qr

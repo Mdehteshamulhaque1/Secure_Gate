@@ -91,12 +91,12 @@ graph TB
 |-------|--------------|
 | **Frontend** | React 19, TypeScript 5, Vite 6, Tailwind CSS 4, Framer Motion 11, TanStack Query 5, React Router 7, React Hook Form + Zod, Lucide Icons, Recharts, Shadcn-style UI primitives |
 | **Backend** | Django 5.2, Django REST Framework 3.15, SimpleJWT 5.4 (rotate + blacklist), dj-database-url, whitenoise, django-cors-headers, gunicorn |
-| **Database** | PostgreSQL 16 (Render) • SQLite (local dev) |
+| **Database** | PostgreSQL (Supabase, Session Pooler) • SQLite (local dev fallback) |
 | **Auth** | JWT (access 30 min, refresh 7 days, rotation + blacklist) |
 | **QR** | `qrcode` library, HMAC-SHA256 signed payload (`token|signature`), expiry, single-use |
 | **Charts** | Recharts (animated area chart, custom tooltips, responsive) |
 | **Animations** | Framer Motion (stagger, scroll parallax, spring physics, reduced-motion support) |
-| **Deployment** | Vercel (Frontend) + Render Blueprint (PostgreSQL + Web Service) |
+| **Deployment** | Vercel (Frontend) + Render (Web Service) + Supabase (PostgreSQL) |
 | **CI/CD** | GitHub → Vercel/Render auto-deploy on push to `main` |
 
 ---
@@ -119,6 +119,11 @@ python manage.py migrate
 python manage.py seed_demo         # creates demo org + accounts
 python manage.py runserver 127.0.0.1:8001
 ```
+
+> Locally, `DATABASE_URL` is optional — without it the app uses a SQLite file in
+> `backend/`. Set `DATABASE_URL` to your Supabase Session Pooler string to run
+> against PostgreSQL locally (set `DJANGO_ENV=production` only if you want to
+> enforce the production no-SQLite rule).
 
 ### Frontend
 ```bash
@@ -179,33 +184,39 @@ npm run build
 
 `vercel.json` handles `/api/*` proxy to Render backend.
 
-### Backend → Render
+### Backend → Render + Supabase
 
 **Option A: Blueprint (Recommended)**
 1. https://dashboard.render.com/new/blueprint
-2. Connect `Mdehteshamulhaque1/Secure_Gate`
-3. Render reads `render.yaml` → creates PostgreSQL + Web Service
-4. Add env vars in Render Dashboard:
+2. Connect `Mdehteshamulhaque1/Secure_Gate` → Render reads `render.yaml`
+   (`rootDir: backend`, Supabase-only — no Render Postgres is created).
+3. Create the **Supabase** project (dashboard) and copy the **Session Pooler**
+   connection string (port `5432`, PostgreSQL).
+4. In Render Dashboard → Service → Environment, add these secrets/env vars:
+   - `DATABASE_URL` = your Supabase connection string (keep `?sslmode=require`)
    - `SECRET_KEY` = `openssl rand -base64 32`
    - `CSRF_TRUSTED_ORIGINS` = `https://your-vercel-app.vercel.app`
    - `CORS_ALLOWED_ORIGINS` = `https://your-vercel-app.vercel.app`
-5. First deploy → **Shell** → `python manage.py migrate && python manage.py createsuperuser`
-6. Settings → **Pre-Deploy Command**: `python manage.py migrate --noinput`
+5. `render.yaml` already runs `python manage.py migrate` as the **pre-deploy
+   command** on every deploy, so the schema is created/updated automatically.
 
 **Option B: Manual Web Service**
+- **Root Directory**: `backend`
 - **Build**: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
+- **Pre-deploy**: `python manage.py migrate`
 - **Start**: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 60`
 
 ### Required Render Env Vars
 
 | Key | Value |
 |-----|-------|
+| `DATABASE_URL` | Supabase Session Pooler connection string (**secret** — never commit) |
 | `SECRET_KEY` | `openssl rand -base64 32` |
+| `DJANGO_ENV` | `production` |
 | `DJANGO_DEBUG` | `False` |
 | `ALLOWED_HOSTS` | `.onrender.com,yourdomain.com` |
 | `CSRF_TRUSTED_ORIGINS` | `https://your-vercel-app.vercel.app` |
 | `CORS_ALLOWED_ORIGINS` | `https://your-vercel-app.vercel.app` |
-| `DATABASE_URL` | Auto from Render PostgreSQL |
 
 ---
 
@@ -237,10 +248,10 @@ SecureGate/
 │   ├── visits/                   # Visitor, Visit, QRPass, Blacklist, workflow
 │   ├── reports/                  # Dashboards, reports, audit log
 │   ├── api/                      # DRF ViewSets, serializers, JWT
-│   ├── render.yaml               # Render Blueprint (PostgreSQL + Web Service)
-│   └── .env.example
+│   └── .env.example              # Supabase-ready env template (no real secrets)
 │
-├── render.yaml                   # Root Render Blueprint
+├── supabase/                     # Supabase notes + archived schema snapshot
+├── render.yaml                   # Render Blueprint (web service, Supabase DB)
 ├── .gitignore
 └── README.md
 ```
