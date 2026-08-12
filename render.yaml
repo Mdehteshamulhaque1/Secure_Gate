@@ -36,5 +36,5 @@ services:
       # Set this in Render Dashboard → Environment. Never commit it.
       - key: DATABASE_URL
         sync: false
-    healthCheckPath: /api/auth/me/
+    healthCheckPath: /api/health/
     autoDeploy: true

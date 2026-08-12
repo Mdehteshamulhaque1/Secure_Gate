@@ -9,6 +9,7 @@ router.register("visitors", views.VisitorViewSet, basename="api-visitors")
 router.register("visits", views.VisitViewSet, basename="api-visits")
 
 urlpatterns = [
+    path("health/", views.HealthCheckView.as_view(), name="api-health"),
     path("visits/register/", views.RegisterVisitView.as_view(), name="api-visit-register"),
     path("", include(router.urls)),
     path("auth/register/", views.RegisterView.as_view(), name="api-register"),

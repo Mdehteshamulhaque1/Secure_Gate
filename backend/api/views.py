@@ -25,6 +25,16 @@ from .serializers import (
 )
 
 
+class HealthCheckView(APIView):
+    """Public liveness probe used by Render's health check (returns 200)."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        return Response({"status": "ok"})
+
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
