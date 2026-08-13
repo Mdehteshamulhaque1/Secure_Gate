@@ -50,7 +50,7 @@ export function VisitorDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const myVisits = visitor ? visits.filter((v) => v.visitor_id === visitor.id) : []
+  const myVisits = visitor ? visits.filter((v) => v.visitor?.id === visitor.id) : []
   const qrVisit = myVisits.find((v) => v.qr && v.qr.is_valid)
   const qrPayload = qrVisit ? `${qrVisit.qr!.token}|${qrVisit.qr!.signature}` : null
 

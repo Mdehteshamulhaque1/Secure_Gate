@@ -98,7 +98,6 @@ export interface Visit {
   id: number
   visit_id: string
   visitor: Visitor
-  visitor_id: number
   host: number | null
   host_name: string
   building: number | null
