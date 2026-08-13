@@ -156,7 +156,7 @@ export function Sidebar({ collapsed, forceVisible = false }: { collapsed: boolea
       )}
     >
       <div className={cn("flex h-16 items-center border-b border-border", collapsed ? "justify-center px-0" : "px-5")}>
-        <NavLink to="/dashboard" className="flex items-center gap-2.5">
+        <NavLink to="/" className="flex items-center gap-2.5">
           <Logo size={32} />
           {!collapsed && (
             <span className="text-lg font-bold tracking-tight">
