@@ -28,13 +28,15 @@ python manage.py seed_demo     # optional demo data (Acme Corp + demo accounts)
 > schema. In production it runs automatically via Render's pre-deploy command
 > (`python manage.py migrate`).
 
-## About `0001_django_full_schema.sql`
+## About the archived schema snapshot
 
-This file is an **archived snapshot** of the DDL Django generated from its
-migration plan. It is kept for reference/audit only — **do not apply it
-manually** and do not treat it as the source of truth. Applying it by hand and
-then running `migrate` can produce conflicting state. If you ever need to build
-a fresh environment, run `python manage.py migrate` instead.
+`docs/database/0001_django_full_schema.sql` is an **archived snapshot** of the
+DDL Django generated from its migration plan. It is kept for reference/audit
+only — **do not apply it manually** and do not treat it as the source of truth.
+It lives **outside** `supabase/migrations/` on purpose, so the Supabase GitHub
+integration does not try to re-apply it to preview databases. Applying it by
+hand and then running `migrate` can produce conflicting state. If you ever need
+to build a fresh environment, run `python manage.py migrate` instead.
 
 ## Row Level Security (RLS)
 
