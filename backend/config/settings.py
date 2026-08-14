@@ -253,9 +253,20 @@ LOGGING = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Console email backend for the demo (swap to SMTP/Resend in production)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "SecureGate <no-reply@securegate.io>"
+# Email. Defaults to the console backend (prints to logs). In production set
+# EMAIL_HOST_USER/EMAIL_HOST_PASSWORD (e.g. a Gmail app password) to send real
+# mail — the QR pass email is delivered via SMTP on visit approval.
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "SecureGate <no-reply@securegate.io>"
+)
 
 # Security headers (production)
 if not DEBUG:

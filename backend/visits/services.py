@@ -7,11 +7,16 @@ Kept in a service layer so both the server-rendered views and the DRF API
 call the exact same logic (single source of truth).
 """
 
+import logging
+
 from django.utils import timezone
 
 from organizations.models import AuditLog
 
+from .emails import send_qr_pass_email
 from .models import QRPass, Visit, VisitStatus
+
+logger = logging.getLogger(__name__)
 
 
 def _log(user, action, visit, extra=""):
@@ -34,6 +39,13 @@ def approve_visit(visit, approver):
     visit.save(update_fields=["status", "approved_at"])
     QRPass.issue(visit)
     _log(approver, "Visit approved", visit)
+    emailed = False
+    try:
+        emailed = send_qr_pass_email(visit)
+    except Exception as exc:  # never let email problems block approval
+        logger.warning("Failed to email QR pass for visit %s: %s", visit.visit_id, exc)
+    if emailed:
+        return True, "Visit approved. QR pass generated and emailed to the visitor."
     return True, "Visit approved. QR pass generated."
 
 

@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -118,6 +118,42 @@ class QRPassTests(SecureGateTestCase):
         ok, msg, _ = QRPass.verify(str(qr.token), qr.signature)
         self.assertFalse(ok)
         self.assertIn("duplicate", msg)
+
+
+class QRPassEmailTests(SecureGateTestCase):
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_approval_emails_qr_pass_to_visitor(self):
+        from django.core import mail
+
+        self.visitor.email = "visitor@gmail.com"
+        self.visitor.save()
+        visit = self.register_visit()
+
+        ok, msg = approve_visit(visit, self.employee)
+        self.assertTrue(ok)
+        self.assertIn("emailed", msg)
+
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, ["visitor@gmail.com"])
+        self.assertIn("QR pass", email.subject)
+        self.assertIn(visit.visitor.full_name, email.body)
+        self.assertEqual(len(email.attachments), 1)
+        attachment = email.attachments[0]
+        if isinstance(attachment, tuple):
+            self.assertTrue(attachment[1].startswith(b"\x89PNG"))
+        else:
+            self.assertEqual(attachment.get_content_type(), "image/png")
+            self.assertTrue(attachment.get_payload(decode=True).startswith(b"\x89PNG"))
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_no_email_when_visitor_has_no_address(self):
+        from django.core import mail
+
+        visit = self.register_visit()  # self.visitor has blank email
+        ok, _ = approve_visit(visit, self.employee)
+        self.assertTrue(ok)
+        self.assertEqual(len(mail.outbox), 0)
 
 
 class RBACTests(SecureGateTestCase):

@@ -1,0 +1,82 @@
+{% load tz %}
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#0b0f19;font-family:Segoe UI,Arial,sans-serif;color:#e5e7eb;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0b0f19;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#111827;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 32px 8px;">
+              <div style="font-size:22px;font-weight:700;color:#f9fafb;">
+                Secure<span style="color:#34d399;">Gate</span>
+              </div>
+              <p style="margin:8px 0 0;font-size:13px;color:#9ca3af;">Your visit is approved — scan this QR pass at the gate.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:20px 32px;">
+              <div style="background:#ffffff;border-radius:14px;padding:18px;display:inline-block;">
+                <img src="cid:qr_pass" alt="QR pass" width="200" height="200" style="display:block;width:200px;height:200px;" />
+              </div>
+              <div style="margin-top:14px;font-size:12px;color:#6ee7b7;">Single-use pass · valid for 120 minutes from approval</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 32px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f172a;border:1px solid #1f2937;border-radius:12px;">
+                {% if visit.visitor.full_name %}
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Visitor</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.visitor.full_name }}</td>
+                </tr>
+                {% endif %}
+                {% if visit.visitor.company %}
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Company</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.visitor.company }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Purpose</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.purpose }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Date</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.visit_date|date:"l, d M Y" }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Arrival</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.expected_arrival|time:"H:i" }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Exit</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.expected_exit|time:"H:i" }}</td>
+                </tr>
+                {% if visit.building %}
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Building</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.building.name }}</td>
+                </tr>
+                {% endif %}
+                {% if visit.host %}
+                <tr>
+                  <td style="padding:10px 16px;font-size:12px;color:#9ca3af;width:120px;">Host</td>
+                  <td style="padding:10px 16px;font-size:13px;color:#e5e7eb;">{{ visit.host.full_name }}</td>
+                </tr>
+                {% endif %}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 28px;font-size:12px;color:#6b7280;">
+              If you did not expect this email, you can ignore it. The pass is cryptographically
+              signed, bound to this visit, and can only be used once.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
