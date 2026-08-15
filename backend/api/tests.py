@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 
 from accounts.models import Role, User
-from organizations.models import Organization
+from organizations.models import Building, Employee, Organization
 from visits.models import Visit, VisitStatus, Visitor
 
 
@@ -117,3 +117,75 @@ class VisitApiTests(APITestCase):
         resp = self.client.get("/api/visits/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.data["results"]), 0)
+
+
+class OrganizationApiTests(APITestCase):
+    """Workspace onboarding: create a new org or join an existing one."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="org@test.com", password="Str0ng!Pass", full_name="Org User"
+        )
+        resp = self.client.post(
+            "/api/auth/token/", {"email": "org@test.com", "password": "Str0ng!Pass"}, format="json"
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resp.data['access']}")
+
+    def test_create_org_assigns_admin_building_and_employee(self):
+        resp = self.client.post(
+            "/api/organizations/",
+            {"name": "New Workspace", "building_name": "Tower One"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 201)
+        org = Organization.objects.get(slug="new-workspace")
+        self.assertEqual(org.name, "New Workspace")
+        self.assertEqual(org.buildings.count(), 1)
+        self.assertEqual(org.buildings.first().name, "Tower One")
+        user = User.objects.get(pk=self.user.pk)
+        self.assertEqual(user.organization, org)
+        self.assertEqual(user.role, Role.ORG_ADMIN)
+        self.assertTrue(Employee.objects.filter(user=user).exists())
+        self.assertTrue(Building.objects.filter(organization=org).exists())
+
+    def test_create_org_uses_default_building_name(self):
+        resp = self.client.post("/api/organizations/", {"name": "Default Building Co"}, format="json")
+        self.assertEqual(resp.status_code, 201)
+        org = Organization.objects.get(slug="default-building-co")
+        self.assertEqual(org.buildings.first().name, "Head Office")
+
+    def test_create_org_second_gets_unique_slug(self):
+        Organization.objects.create(name="New Workspace", slug="new-workspace")
+        resp = self.client.post("/api/organizations/", {"name": "New Workspace"}, format="json")
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(Organization.objects.filter(slug="new-workspace-2").exists())
+
+    def test_create_org_rejects_user_already_in_org(self):
+        existing = Organization.objects.create(name="Existing", slug="existing")
+        self.user.organization = existing
+        self.user.save(update_fields=["organization"])
+        resp = self.client.post("/api/organizations/", {"name": "New"}, format="json")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_org_requires_auth(self):
+        self.client.credentials()
+        resp = self.client.post("/api/organizations/", {"name": "X"}, format="json")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_join_org_assigns_user_as_employee(self):
+        Organization.objects.create(name="Acme", slug="acme")
+        resp = self.client.post("/api/organizations/join/", {"slug": "acme"}, format="json")
+        self.assertEqual(resp.status_code, 200)
+        user = User.objects.get(pk=self.user.pk)
+        self.assertEqual(user.organization.slug, "acme")
+        self.assertEqual(user.role, Role.EMPLOYEE)
+        self.assertTrue(Employee.objects.filter(user=user).exists())
+
+    def test_join_org_unknown_slug_rejected(self):
+        resp = self.client.post("/api/organizations/join/", {"slug": "nope"}, format="json")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_join_org_requires_auth(self):
+        self.client.credentials()
+        resp = self.client.post("/api/organizations/join/", {"slug": "acme"}, format="json")
+        self.assertEqual(resp.status_code, 401)

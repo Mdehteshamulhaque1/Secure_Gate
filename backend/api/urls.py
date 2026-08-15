@@ -18,5 +18,7 @@ urlpatterns = [
     path("auth/me/", views.CurrentUserView.as_view(), name="api-me"),
     path("hosts/", views.HostListView.as_view(), name="api-hosts"),
     path("buildings/", views.BuildingListView.as_view(), name="api-buildings"),
+    path("organizations/", views.OrganizationCreateView.as_view(), name="api-org-create"),
+    path("organizations/join/", views.OrganizationJoinView.as_view(), name="api-org-join"),
     path("dashboard/summary/", views.DashboardSummaryView.as_view(), name="api-dashboard-summary"),
 ]

@@ -7,6 +7,9 @@ import { api } from "@/lib/api"
 import type {
   Building,
   DashboardSummary,
+  OrganizationCreatePayload,
+  OrganizationJoinPayload,
+  OrganizationResponse,
   RegisterVisitPayload,
   RegisterVisitResponse,
   User,
@@ -135,6 +138,34 @@ export function useRegisterVisit() {
       queryClient.invalidateQueries({ queryKey: ["visits"] })
       queryClient.invalidateQueries({ queryKey: ["visitors"] })
       queryClient.invalidateQueries({ queryKey: ["summary"] })
+    },
+  })
+}
+
+export function useCreateOrganization() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: OrganizationCreatePayload) =>
+      api<OrganizationResponse>("/api/organizations/", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.me })
+    },
+  })
+}
+
+export function useJoinOrganization() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: OrganizationJoinPayload) =>
+      api<OrganizationResponse>("/api/organizations/join/", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.me })
     },
   })
 }

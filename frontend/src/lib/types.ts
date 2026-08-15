@@ -61,6 +61,26 @@ export interface MeResponse {
   organization: Organization | null
 }
 
+export interface OrganizationCreatePayload {
+  name: string
+  tagline?: string
+  city?: string
+  country?: string
+  timezone?: string
+  working_hours_start?: string
+  working_hours_end?: string
+  building_name?: string
+}
+
+export interface OrganizationJoinPayload {
+  slug: string
+}
+
+export interface OrganizationResponse {
+  organization: Organization
+  user: User
+}
+
 export interface AuthTokens {
   access: string
   refresh: string

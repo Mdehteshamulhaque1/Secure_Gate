@@ -1,3 +1,4 @@
+from django.utils.text import slugify
 from rest_framework import serializers
 
 from accounts.models import User
@@ -30,6 +31,51 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = ["id", "name", "slug", "tagline", "timezone", "working_hours_start", "working_hours_end"]
+
+
+class OrganizationCreateSerializer(serializers.ModelSerializer):
+    """Create a workspace and (optionally) a default building with it."""
+
+    building_name = serializers.CharField(
+        required=False, allow_blank=True, max_length=200,
+        help_text="Name of the default building to create for the workspace.",
+    )
+
+    class Meta:
+        model = Organization
+        fields = [
+            "name", "tagline", "address", "city", "country", "timezone",
+            "working_hours_start", "working_hours_end", "building_name",
+        ]
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Workspace name is required.")
+        return value.strip()
+
+    def create(self, validated_data):
+        validated_data.pop("building_name", None)
+        base = slugify(validated_data["name"]) or "workspace"
+        slug = base
+        counter = 2
+        while Organization.objects.filter(slug=slug).exists():
+            slug = f"{base}-{counter}"
+            counter += 1
+        validated_data["slug"] = slug
+        return Organization.objects.create(**validated_data)
+
+
+class OrganizationJoinSerializer(serializers.Serializer):
+    """Join an existing workspace by its slug."""
+
+    slug = serializers.SlugField()
+
+    def validate_slug(self, value):
+        if not Organization.objects.filter(slug=value).exists():
+            raise serializers.ValidationError(
+                "Workspace not found. Check the slug and try again."
+            )
+        return value
 
 
 class BuildingSerializer(serializers.ModelSerializer):

@@ -8,15 +8,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.models import User
+from accounts.models import Role, User
 from accounts.permissions import has_perm
-from organizations.models import Building
+from organizations.models import AuditLog, Building, Employee, Organization
 from visits.models import Visit, VisitStatus, Visitor
 from visits.services import approve_visit, check_in, check_out, reject_visit
 
 from .serializers import (
     BuildingSerializer,
     DashboardSummarySerializer,
+    OrganizationCreateSerializer,
+    OrganizationJoinSerializer,
     OrganizationSerializer,
     RegisterSerializer,
     UserSerializer,
@@ -198,6 +200,110 @@ class RegisterVisitView(APIView):
                 "visit": VisitSerializer(visit, context={"request": request}).data,
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+def _client_ip(request):
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "") or None
+
+
+class OrganizationCreateView(APIView):
+    """Create a workspace and attach the current user as its ORG_ADMIN.
+
+    Also creates a default building (so the visit-registration form has
+    something to select) and an Employee profile for the creator.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.organization is not None:
+            return Response(
+                {"detail": "You already belong to a workspace."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = OrganizationCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        org = serializer.save()
+
+        user = request.user
+        user.organization = org
+        user.role = Role.ORG_ADMIN
+        user.save(update_fields=["organization", "role"])
+
+        building_name = (request.data.get("building_name") or "").strip() or "Head Office"
+        Building.objects.create(organization=org, name=building_name)
+
+        Employee.objects.get_or_create(
+            user=user,
+            defaults={
+                "organization": org,
+                "employee_id": f"EMP-{org.pk:04d}",
+                "designation": "Workspace Admin",
+            },
+        )
+
+        AuditLog.log(
+            user, "org_created", "Organization", org.pk,
+            f"Created workspace {org.name}", ip_address=_client_ip(request),
+        )
+
+        return Response(
+            {
+                "organization": OrganizationSerializer(org).data,
+                "user": UserSerializer(user).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class OrganizationJoinView(APIView):
+    """Attach the current user to an existing workspace by its slug.
+
+    Joiners are granted the EMPLOYEE role (except SUPER_ADMIN users, whose
+    global role is preserved).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.organization is not None:
+            return Response(
+                {"detail": "You already belong to a workspace."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = OrganizationJoinSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        org = Organization.objects.get(slug=serializer.validated_data["slug"])
+
+        user = request.user
+        user.organization = org
+        if user.role != Role.SUPER_ADMIN:
+            user.role = Role.EMPLOYEE
+        user.save(update_fields=["organization", "role"])
+
+        Employee.objects.get_or_create(
+            user=user,
+            defaults={
+                "organization": org,
+                "employee_id": f"EMP-{org.pk:04d}-{user.pk:03d}",
+                "designation": "",
+            },
+        )
+
+        AuditLog.log(
+            user, "org_joined", "Organization", org.pk,
+            f"Joined workspace {org.name}", ip_address=_client_ip(request),
+        )
+
+        return Response(
+            {
+                "organization": OrganizationSerializer(org).data,
+                "user": UserSerializer(user).data,
+            }
         )
 
 

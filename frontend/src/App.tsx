@@ -9,6 +9,7 @@ import { LoginPage } from "@/pages/auth/login"
 import { RegisterPage } from "@/pages/auth/register"
 import { DashboardPage } from "@/pages/dashboard"
 import { NotFoundPage } from "@/pages/error"
+import { OnboardingPage } from "@/pages/onboarding"
 import { RegisterVisitPage } from "@/pages/register-visit"
 import { ReportsPage } from "@/pages/reports"
 import { SecurityPage } from "@/pages/security"
@@ -17,11 +18,13 @@ import { VisitorsPage } from "@/pages/visitors"
 const LandingPage = lazy(() => import("@/pages/landing"))
 
 function Protected({ children, roles }: { children: ReactNode; roles?: string[] }) {
-  const { isAuthenticated, loading, user } = useAuth()
+  const { isAuthenticated, loading, user, org } = useAuth()
 
   if (loading) return <PageLoader />
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
+
+  if (org === null) return <Navigate to="/onboarding" replace />
 
   if (roles && user && !hasRole(user.role, roles)) return <Navigate to="/dashboard" replace />
 
@@ -41,6 +44,7 @@ export default function App() {
       />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<RegisterPage />} />
+      <Route path="/onboarding" element={<OnboardingPage />} />
 
       <Route
         path="/dashboard"
