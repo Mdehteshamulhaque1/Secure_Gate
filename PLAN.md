@@ -48,16 +48,12 @@ It is a full-stack web app:
   conflicts resolved (schema snapshot moved out of `supabase/migrations/`).
 
 ### Remaining / future work
-1. **Frontend org onboarding** — a way for a signed-up user with no organization
-   to create/join one from the UI (today it requires admin/seed, otherwise the
-   building/host lists are empty and registration is blocked with
-   `"Your account is not assigned to an organization."`).
-2. **Real SMTP delivery** — wire `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD`
+1. **Real SMTP delivery** — wire `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD`
    (Gmail app password) into Render; until then emails print to logs.
-3. **QR re-issue / self-service** — allow regenerating an expired pass and a
+2. **QR re-issue / self-service** — allow regenerating an expired pass and a
    public visitor-facing page to view/download the pass.
-4. **SMS QR delivery** (optional, e.g. Twilio) for visitors without email.
-5. **Hardening pass** — API rate limiting, refresh-token rotation on logout,
+3. **SMS QR delivery** (optional, e.g. Twilio) for visitors without email.
+4. **Hardening pass** — API rate limiting, refresh-token rotation on logout,
    pagination on all list endpoints (already capped via `page_size`), audit
    export (CSV/PDF), and archived-visit purge job.
 
@@ -180,17 +176,26 @@ Secure_Gate-main/
 - `backend/visits/emails.py` — `send_qr_pass_email()` + `qr_pass_png_bytes()`.
 - `backend/templates/visits/qr_pass_email.html` — HTML email with inline QR.
 - `docs/database/0001_django_full_schema.sql` — moved archived schema snapshot.
+- `frontend/src/pages/onboarding.tsx` — workspace create/join UI.
 - `PLAN.md` — this document.
 
 ### Modified (recent)
 - `backend/config/settings.py` — LOGGING config; env-driven EMAIL_* settings.
+- `backend/api/views.py` — added `OrganizationCreateView`, `OrganizationJoinView`.
+- `backend/api/serializers.py` — added `OrganizationCreateSerializer`,
+  `OrganizationJoinSerializer`.
+- `backend/api/urls.py` — `organizations/`, `organizations/join/` endpoints.
 - `backend/api/tests.py` — API tests (register/token/me/visit-register/org scope).
 - `backend/visits/services.py` — email QR on approval (non-blocking on SMTP error).
-- `backend/visits/tests.py` — 2 new email tests (23 total).
+- `backend/visits/tests.py` — 2 new email tests (31 total).
 - `backend/.env.example` — documented `EMAIL_*` vars.
 - `frontend/src/components/layout/Sidebar.tsx` — logo links to landing `/`.
 - `frontend/src/components/visitors/VisitorDrawer.tsx` — match visits via `visitor.id`.
-- `frontend/src/lib/types.ts` — removed phantom `visitor_id` from `Visit`.
+- `frontend/src/lib/types.ts` — removed phantom `visitor_id` from `Visit`;
+  added org create/join payloads.
+- `frontend/src/lib/queries.ts` — `useCreateOrganization`, `useJoinOrganization`.
+- `frontend/src/App.tsx` — `/onboarding` route; `Protected` redirects
+  authenticated users with no org to onboarding.
 - `supabase/migrations/README.md` — archive location note.
 
 ### Remaining work — likely files
@@ -216,8 +221,10 @@ Secure_Gate-main/
 7. Implemented QR email delivery on approval; added tests; pushed.
 
 ### Remaining (in order)
-8. Frontend org onboarding (create/join org, assign building/host defaults) so
-   new signups can use the app without admin intervention.
+8. ~~Frontend org onboarding~~ ✅ Done — `POST /api/organizations/` (create,
+   sets user ORG_ADMIN + default building) and `POST /api/organizations/join/`
+   (join by slug, sets EMPLOYEE); `/onboarding` page; no-org users are
+   redirected there instead of hitting a blocked form.
 9. Configure real Gmail SMTP on Render (user action) and verify a delivered email.
 10. Add rate limiting (DRF `DEFAULT_THROTTLE_RATES`) and refresh-token rotation.
 11. QR self-service page + regeneration of expired passes.
@@ -227,11 +234,12 @@ Secure_Gate-main/
 
 ## 8. Testing requirements
 
-- **Backend:** `python manage.py test` must pass (currently **23 tests**).
+- **Backend:** `python manage.py test` must pass (currently **31 tests**).
   Cover: register/token/me, org scoping, visit register + approve/reject/
   check-in/out, QR verify (tampered/unknown/duplicate), RBAC, page renders,
-  **QR email sent on approval with a PNG attachment**, and no email when the
-  visitor has no address.
+  **QR email sent on approval with a PNG attachment**, no email when the
+  visitor has no address, and **org create/join** (admin role, default building,
+  unique slug, join by slug, already-in-org rejection).
 - **Frontend:** `npm run typecheck` (`tsc --noEmit`) and `npm run build` pass.
 - **Deployed smoke test (manual):**
   1. Sign up → confirm token/`/api/auth/me/` returns 200.
@@ -281,7 +289,8 @@ Secure_Gate-main/
 SecureGate is **done** when:
 
 1. A new user can sign up and (via UI) create/join an organization with a
-   building and default host — no admin/seed step required.
+   building and default host — no admin/seed step required. ✅ (Done — verified
+   live: create → ORG_ADMIN + default building; join by slug → EMPLOYEE.)
 2. Registering a visitor (with an email) → approving → **emails the QR pass** to
    that visitor and shows it in-app; the pass scans once, then is spent.
 3. Security can verify the QR, check in/out, and tampered/expired/duplicate
